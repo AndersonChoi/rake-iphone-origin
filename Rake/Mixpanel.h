@@ -434,69 +434,6 @@
  */
 - (void)archive;
 
-/*!
- @method
-
- @abstract
- Shows the survey with the given name.
-
- @discussion
- This method allows you to explicitly show a named survey at the time of your choosing.
-
- */
-- (void)showSurveyWithID:(NSUInteger)ID;
-
-/*!
- @method
-
- @abstract
- Show a survey if one is available.
-
- @discussion
- This method allows you to display the first available survey targeted to the currently
- identified user at the time of your choosing. You would typically pair this with
- setting <code>showSurveyOnActive = NO;</code> so that the survey won't show automatically.
-
- */
-- (void)showSurvey;
-
-
-/*!
- @method
-
- @abstract
- Shows the notification of the given id.
-
- @discussion
- You do not need to call this method on the main thread.
- */
-- (void)showNotificationWithID:(NSUInteger)ID;
-
-
-/*!
- @method
-
- @abstract
- Shows a notification with the given type if one is available.
-
- @discussion
- You do not need to call this method on the main thread.
-
- @param type The type of notification to show, either @"mini", or @"takeover"
- */
-- (void)showNotificationWithType:(NSString *)type;
-
-/*!
- @method
-
- @abstract
- Shows a notification if one is available.
-
- @discussion
- You do not need to call this method on the main thread.
- */
-- (void)showNotification;
-
 - (void)createAlias:(NSString *)alias forDistinctID:(NSString *)distinctID;
 
 @end
@@ -533,22 +470,6 @@
  */
 @interface MixpanelPeople : NSObject
 
-/*!
- @method
-
- @abstract
- Register the given device to receive push notifications.
-
- @discussion
- This will associate the device token with the current user in Mixpanel People,
- which will allow you to send push notifications to the user from the Mixpanel
- People web interface. You should call this method with the <code>NSData</code>
- token passed to
- <code>application:didRegisterForRemoteNotificationsWithDeviceToken:</code>.
-
- @param deviceToken     device token as returned <code>application:didRegisterForRemoteNotificationsWithDeviceToken:</code>
- */
-- (void)addPushDeviceToken:(NSData *)deviceToken;
 
 /*!
  @method
