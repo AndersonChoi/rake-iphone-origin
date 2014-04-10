@@ -63,10 +63,12 @@
 
 @end
 
+/*
 static NSString *MPURLEncode(NSString *s)
 {
     return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, (CFStringRef)s, NULL, CFSTR("!*'();:@&=+$,/?%#[]"), kCFStringEncodingUTF8));
 }
+*/
 
 @implementation Mixpanel
 
