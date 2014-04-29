@@ -47,7 +47,8 @@
 @property (nonatomic, strong) dispatch_queue_t serialQueue;
 @property (nonatomic, assign) SCNetworkReachabilityRef reachability;
 @property (nonatomic, strong) CTTelephonyNetworkInfo *telephonyInfo;
-@property (nonatomic, strong) NSDateFormatter *dateFormatter;
+@property (nonatomic, strong) NSDateFormatter *localDateFormatter;
+@property (nonatomic, strong) NSDateFormatter *baseDateFormatter;
 
 @end
 
@@ -129,9 +130,12 @@ static Rake *sharedInstance = nil;
         self.taskId = UIBackgroundTaskInvalid;
         NSString *label = [NSString stringWithFormat:@"com.rake.%@.%p", apiToken, self];
         self.serialQueue = dispatch_queue_create([label UTF8String], DISPATCH_QUEUE_SERIAL);
-        self.dateFormatter = [[NSDateFormatter alloc] init];
-        [_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
-        [_dateFormatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]];
+        
+        self.localDateFormatter = [[NSDateFormatter alloc] init];
+        self.baseDateFormatter = [[NSDateFormatter alloc] init];
+        [_localDateFormatter setDateFormat:@"yyyyMMddHHmmssSSS"];
+        [_baseDateFormatter setDateFormat:@"yyyyMMddHHmmssSSS"];
+        [_baseDateFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"Asia/Seoul"]];
         
         
         // wifi reachability
@@ -219,8 +223,8 @@ static Rake *sharedInstance = nil;
 
 - (NSString *)IFA
 {
-    NSString *ifa = nil;
-#ifndef Rake_NO_IFA
+    NSString *ifa = @"UNKNOWN";
+    
     Class ASIdentifierManagerClass = NSClassFromString(@"ASIdentifierManager");
     if (ASIdentifierManagerClass) {
         SEL sharedManagerSelector = NSSelectorFromString(@"sharedManager");
@@ -229,7 +233,7 @@ static Rake *sharedInstance = nil;
         NSUUID *uuid = ((NSUUID* (*)(id, SEL))[sharedManager methodForSelector:advertisingIdentifierSelector])(sharedManager, advertisingIdentifierSelector);
         ifa = [uuid UUIDString];
     }
-#endif
+    
     return ifa;
 }
 
@@ -281,7 +285,13 @@ static Rake *sharedInstance = nil;
     CTCarrier *carrier = [networkInfo subscriberCellularProvider];
     if (carrier.carrierName.length) {
         [p setValue:carrier.carrierName forKey:@"carrier_name"];
+    }else{
+        [p setValue:@"UNKNOWN" forKey:@"carrier_name"];
     }
+    
+    
+    [p setValue:[Rake wifiAvailable]?@"WIFI" : @"NOT WIFI" forKey:@"network_type"];
+    
     
     [p setValue:[self IFA] forKey:@"device_id"];
     
@@ -343,9 +353,10 @@ static Rake *sharedInstance = nil;
         }
         return [NSDictionary dictionaryWithDictionary:d];
     }
+    
     // some common cases
     if ([obj isKindOfClass:[NSDate class]]) {
-        return [self.dateFormatter stringFromDate:obj];
+        return [self.localDateFormatter stringFromDate:obj];
     } else if ([obj isKindOfClass:[NSURL class]]) {
         return [obj absoluteString];
     }
@@ -430,20 +441,15 @@ static Rake *sharedInstance = nil;
     [Rake assertPropertyTypes:properties];
     
     NSDate* now = [NSDate date];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyyMMddHHmmssSSS"];
-    [dateFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"Asia/Seoul"]];
     
-    NSDateFormatter *localDateFormatter = [[NSDateFormatter alloc] init];
-    [localDateFormatter setDateFormat:@"yyyyMMddHHmmssSSS"];
     
     
     dispatch_async(self.serialQueue, ^{
         NSMutableDictionary *p = [NSMutableDictionary dictionary];
         
         
-        p[@"local_time"] = [dateFormatter stringFromDate:now];
-        p[@"base_time"] = [localDateFormatter stringFromDate:now];
+        p[@"local_time"] = [_localDateFormatter stringFromDate:now];
+        p[@"base_time"] = [_baseDateFormatter stringFromDate:now];
         
         
         // 1. super properties
@@ -459,8 +465,8 @@ static Rake *sharedInstance = nil;
         
         // 4. add properties
         NSDictionary *e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
-                            @"local_time": [dateFormatter stringFromDate:now],
-                            @"base_time": [localDateFormatter stringFromDate:now],
+                            @"local_time": [_localDateFormatter stringFromDate:now],
+                            @"base_time": [_baseDateFormatter stringFromDate:now],
                             @"token": self.apiToken};
         
         RakeLog(@"%@ queueing event: %@", self, e);
@@ -628,9 +634,7 @@ static Rake *sharedInstance = nil;
 
 - (void)flushEvents
 {
-    NSLog(@"~~~ Flush ~~~");
-    [self flushQueue:_eventsQueue
-            endpoint:@"/track/"];
+    [self flushQueue:_eventsQueue endpoint:@"/track/"];
 }
 
 
@@ -688,6 +692,36 @@ static Rake *sharedInstance = nil;
         self.automaticProperties[@"network_type"] = wifi ? @"WIFI" : @"NOT WIFI";
     });
 }
+
++ (BOOL)wifiAvailable
+{
+    struct sockaddr_in sockAddr;
+    bzero(&sockAddr, sizeof(sockAddr));
+    sockAddr.sin_len = sizeof(sockAddr);
+    sockAddr.sin_family = AF_INET;
+    
+    SCNetworkReachabilityRef nrRef = SCNetworkReachabilityCreateWithAddress(NULL, (struct sockaddr *)&sockAddr);
+    SCNetworkReachabilityFlags flags;
+    BOOL didRetrieveFlags = SCNetworkReachabilityGetFlags(nrRef, &flags);
+    if (!didRetrieveFlags) {
+        RakeDebug(@"%@ unable to fetch the network reachablity flags", self);
+    }
+    
+    CFRelease(nrRef);
+    
+    if (!didRetrieveFlags || (flags & kSCNetworkReachabilityFlagsReachable) != kSCNetworkReachabilityFlagsReachable) {
+        // unable to connect to a network (no signal or airplane mode activated)
+        return NO;
+    }
+    
+    if ((flags & kSCNetworkReachabilityFlagsIsWWAN) == kSCNetworkReachabilityFlagsIsWWAN) {
+        // only a cellular network connection is available.
+        return NO;
+    }
+    
+    return YES;
+}
+
 
 - (NSURLRequest *)apiRequestWithEndpoint:(NSString *)endpoint andBody:(NSString *)body
 {
