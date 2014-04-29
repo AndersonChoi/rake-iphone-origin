@@ -100,29 +100,29 @@ static Rake *sharedInstance = nil;
         NSLog(@"%@ warning empty api token", self);
     }
     if (self = [self init]) {
-//        self.people = [[RakePeople alloc] initWithRake:self];
+        //        self.people = [[RakePeople alloc] initWithRake:self];
         self.apiToken = apiToken;
         _flushInterval = flushInterval;
         self.flushOnBackground = YES;
-//        self.showNetworkActivityIndicator = YES;
-//        self.serverURL = @"https://api.Rake.com";
+        //        self.showNetworkActivityIndicator = YES;
+        //        self.serverURL = @"https://api.Rake.com";
         self.serverURL = @"http://localhost:9000";
-
-
-
+        
+        
+        
         self.distinctId = [self defaultDistinctId];
         self.superProperties = [NSMutableDictionary dictionary];
         self.automaticProperties = [self collectAutomaticProperties];
         self.eventsQueue = [NSMutableArray array];
-//        self.peopleQueue = [NSMutableArray array];
+        //        self.peopleQueue = [NSMutableArray array];
         self.taskId = UIBackgroundTaskInvalid;
         NSString *label = [NSString stringWithFormat:@"com.rake.%@.%p", apiToken, self];
         self.serialQueue = dispatch_queue_create([label UTF8String], DISPATCH_QUEUE_SERIAL);
         self.dateFormatter = [[NSDateFormatter alloc] init];
         [_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
         [_dateFormatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]];
-
-
+        
+        
         // wifi reachability
         BOOL reachabilityOk = NO;
         if ((self.reachability = SCNetworkReachabilityCreateWithName(NULL, "api.rake.com")) != NULL) {
@@ -140,9 +140,9 @@ static Rake *sharedInstance = nil;
         if (!reachabilityOk) {
             NSLog(@"%@ failed to set up reachability callback: %s", self, SCErrorString(SCError()));
         }
-
+        
         NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
-
+        
         // cellular info
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000
         if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) {
@@ -154,7 +154,7 @@ static Rake *sharedInstance = nil;
                                      object:nil];
         }
 #endif
-
+        
         [notificationCenter addObserver:self
                                selector:@selector(applicationWillTerminate:)
                                    name:UIApplicationWillTerminateNotification
@@ -177,7 +177,7 @@ static Rake *sharedInstance = nil;
                                  object:nil];
         [self unarchive];
     }
-
+    
     return self;
 }
 
@@ -342,10 +342,10 @@ static Rake *sharedInstance = nil;
     if (data) {
         b64String = [data rk_base64EncodedString];
         b64String = (id)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
-                                                                (CFStringRef)b64String,
-                                                                NULL,
-                                                                CFSTR("!*'();:@&=+$,/?%#[]"),
-                                                                kCFStringEncodingUTF8));
+                                                                                  (CFStringRef)b64String,
+                                                                                  NULL,
+                                                                                  CFSTR("!*'();:@&=+$,/?%#[]"),
+                                                                                  kCFStringEncodingUTF8));
     }
     return b64String;
 }
@@ -374,7 +374,7 @@ static Rake *sharedInstance = nil;
 - (NSString *)defaultDistinctId
 {
     NSString *distinctId = [self IFA];
-
+    
     if (!distinctId && NSClassFromString(@"UIDevice")) {
         distinctId = [[UIDevice currentDevice].identifierForVendor UUIDString];
     }
@@ -405,7 +405,7 @@ static Rake *sharedInstance = nil;
 
 - (void)track:(NSDictionary *)properties
 {
-
+    
     properties = [properties copy];
     [Rake assertPropertyTypes:properties];
     NSNumber *epochSeconds = @(round([[NSDate date] timeIntervalSince1970]));
@@ -575,15 +575,15 @@ static Rake *sharedInstance = nil;
 {
     dispatch_async(self.serialQueue, ^{
         RakeDebug(@"%@ flush starting", self);
-
+        
         __strong id<RakeDelegate> strongDelegate = _delegate;
         if (strongDelegate != nil && [strongDelegate respondsToSelector:@selector(RakeWillFlush:)] && ![strongDelegate RakeWillFlush:self]) {
             RakeDebug(@"%@ flush deferred by delegate", self);
             return;
         }
-
+        
         [self flushEvents];
-
+        
         RakeDebug(@"%@ flush complete", self);
     });
 }
@@ -600,29 +600,29 @@ static Rake *sharedInstance = nil;
     while ([queue count] > 0) {
         NSUInteger batchSize = ([queue count] > 50) ? 50 : [queue count];
         NSArray *batch = [queue subarrayWithRange:NSMakeRange(0, batchSize)];
-
+        
         NSString *requestData = [self encodeAPIData:batch];
         NSString *postBody = [NSString stringWithFormat:@"ip=1&data=%@", requestData];
         RakeDebug(@"%@ flushing %lu of %lu to %@: %@", self, (unsigned long)[batch count], (unsigned long)[queue count], endpoint, queue);
         NSURLRequest *request = [self apiRequestWithEndpoint:endpoint andBody:postBody];
         NSError *error = nil;
-
-//        [self updateNetworkActivityIndicator:YES];
-
+        
+        //        [self updateNetworkActivityIndicator:YES];
+        
         NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:&error];
-
-//        [self updateNetworkActivityIndicator:NO];
-
+        
+        //        [self updateNetworkActivityIndicator:NO];
+        
         if (error) {
             NSLog(@"%@ network failure: %@", self, error);
             break;
         }
-
+        
         NSString *response = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
         if ([response intValue] == 0) {
             NSLog(@"%@ %@ api rejected some items", self, endpoint);
         };
-
+        
         [queue removeObjectsInArray:batch];
     }
 }
@@ -780,7 +780,7 @@ static Rake *sharedInstance = nil;
 - (void)applicationDidEnterBackground:(NSNotificationCenter *)notification
 {
     RakeDebug(@"%@ did enter background", self);
-
+    
     self.taskId = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
         RakeDebug(@"%@ flush %lu cut short", self, (unsigned long)self.taskId);
         [[UIApplication sharedApplication] endBackgroundTask:self.taskId];
@@ -809,7 +809,7 @@ static Rake *sharedInstance = nil;
         if (self.taskId != UIBackgroundTaskInvalid) {
             [[UIApplication sharedApplication] endBackgroundTask:self.taskId];
             self.taskId = UIBackgroundTaskInvalid;
-//            [self updateNetworkActivityIndicator:NO];
+            //            [self updateNetworkActivityIndicator:NO];
         }
     });
 }
@@ -818,7 +818,7 @@ static Rake *sharedInstance = nil;
 {
     RakeDebug(@"%@ application will terminate", self);
     dispatch_async(_serialQueue, ^{
-       [self archive];
+        [self archive];
     });
 }
 

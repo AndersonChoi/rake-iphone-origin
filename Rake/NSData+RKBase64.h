@@ -16,15 +16,15 @@
 #import <Foundation/Foundation.h>
 
 void *RK_NewBase64Decode(
-	const char *inputBuffer,
-	size_t length,
-	size_t *outputLength);
+                         const char *inputBuffer,
+                         size_t length,
+                         size_t *outputLength);
 
 char *RK_NewBase64Encode(
-	const void *inputBuffer,
-	size_t length,
-	bool separateLines,
-	size_t *outputLength);
+                         const void *inputBuffer,
+                         size_t length,
+                         bool separateLines,
+                         size_t *outputLength);
 
 @interface NSData (Rake_Base64)
 
