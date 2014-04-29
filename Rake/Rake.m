@@ -16,7 +16,7 @@
 #import "Rake.h"
 #import "NSData+RKBase64.h"
 
-#define VERSION @"0.0.4"
+#define VERSION @"r0.5.0_c1.7.0"
 
 #ifdef RAKE_LOG
 #define RakeLog(...) NSLog(__VA_ARGS__)
@@ -52,10 +52,10 @@
 @end
 
 
-static NSString *RKURLEncode(NSString *s)
-{
-    return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, (CFStringRef)s, NULL, CFSTR("!*'();:@&=+$,/?%#[]"), kCFStringEncodingUTF8));
-}
+//static NSString *RKURLEncode(NSString *s)
+//{
+//    return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, (CFStringRef)s, NULL, CFSTR("!*'();:@&=+$,/?%#[]"), kCFStringEncodingUTF8));
+//}
 
 
 @implementation Rake
@@ -83,6 +83,20 @@ static Rake *sharedInstance = nil;
     return sharedInstance;
 }
 
++ (Rake *)sharedInstanceWithToken:(NSString *)apiToken andUseDevServer:(BOOL)isDevServer
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[super alloc] initWithToken:apiToken andFlushInterval:60];
+        if(isDevServer){
+            [sharedInstance setServerURL:@"http://dev.rake.skplanet.com:8000/log/"];
+        }else{
+            [sharedInstance setServerURL:@"https://rake.skplanet.com:8443/log/"];
+        }
+    });
+    return sharedInstance;
+}
+
 + (Rake *)sharedInstance
 {
     if (sharedInstance == nil) {
@@ -100,13 +114,11 @@ static Rake *sharedInstance = nil;
         NSLog(@"%@ warning empty api token", self);
     }
     if (self = [self init]) {
-        //        self.people = [[RakePeople alloc] initWithRake:self];
         self.apiToken = apiToken;
         _flushInterval = flushInterval;
         self.flushOnBackground = YES;
         //        self.showNetworkActivityIndicator = YES;
-        //        self.serverURL = @"https://api.Rake.com";
-        self.serverURL = @"http://localhost:9000";
+        self.serverURL = @"http://dev.rake.skplanet.com:8000/log/";
         
         
         
@@ -114,7 +126,6 @@ static Rake *sharedInstance = nil;
         self.superProperties = [NSMutableDictionary dictionary];
         self.automaticProperties = [self collectAutomaticProperties];
         self.eventsQueue = [NSMutableArray array];
-        //        self.peopleQueue = [NSMutableArray array];
         self.taskId = UIBackgroundTaskInvalid;
         NSString *label = [NSString stringWithFormat:@"com.rake.%@.%p", apiToken, self];
         self.serialQueue = dispatch_queue_create([label UTF8String], DISPATCH_QUEUE_SERIAL);
@@ -145,14 +156,14 @@ static Rake *sharedInstance = nil;
         
         // cellular info
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000
-        if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) {
-            self.telephonyInfo = [[CTTelephonyNetworkInfo alloc] init];
-            _automaticProperties[@"$radio"] = [self currentRadio];
-            [notificationCenter addObserver:self
-                                   selector:@selector(setCurrentRadio)
-                                       name:CTRadioAccessTechnologyDidChangeNotification
-                                     object:nil];
-        }
+        //        if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1) {
+        //            self.telephonyInfo = [[CTTelephonyNetworkInfo alloc] init];
+        //            _automaticProperties[@"$radio"] = [self currentRadio];
+        //            [notificationCenter addObserver:self
+        //                                   selector:@selector(setCurrentRadio)
+        //                                       name:CTRadioAccessTechnologyDidChangeNotification
+        //                                     object:nil];
+        //        }
 #endif
         
         [notificationCenter addObserver:self
@@ -223,23 +234,23 @@ static Rake *sharedInstance = nil;
 }
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000
-- (void)setCurrentRadio
-{
-    dispatch_async(self.serialQueue, ^(){
-        _automaticProperties[@"$radio"] = [self currentRadio];
-    });
-}
-
-- (NSString *)currentRadio
-{
-    NSString *radio = _telephonyInfo.currentRadioAccessTechnology;
-    if (!radio) {
-        radio = @"None";
-    } else if ([radio hasPrefix:@"CTRadioAccessTechnology"]) {
-        radio = [radio substringFromIndex:23];
-    }
-    return radio;
-}
+//- (void)setCurrentRadio
+//{
+//    dispatch_async(self.serialQueue, ^(){
+//        _automaticProperties[@"$radio"] = [self currentRadio];
+//    });
+//}
+//
+//- (NSString *)currentRadio
+//{
+//    NSString *radio = _telephonyInfo.currentRadioAccessTechnology;
+//    if (!radio) {
+//        radio = @"None";
+//    } else if ([radio hasPrefix:@"CTRadioAccessTechnology"]) {
+//        radio = [radio substringFromIndex:23];
+//    }
+//    return radio;
+//}
 #endif
 
 - (NSMutableDictionary *)collectAutomaticProperties
@@ -247,24 +258,33 @@ static Rake *sharedInstance = nil;
     NSMutableDictionary *p = [NSMutableDictionary dictionary];
     UIDevice *device = [UIDevice currentDevice];
     NSString *deviceModel = [self deviceModel];
-    [p setValue:@"iphone" forKey:@"rk_lib"];
-    [p setValue:VERSION forKey:@"lib_version"];
+    [p setValue:@"iphone" forKey:@"rake_lib"];
+    [p setValue:VERSION forKey:@"rake_lib_version"];
     [p setValue:[[NSBundle mainBundle] infoDictionary][@"CFBundleVersion"] forKey:@"app_version"];
     [p setValue:[[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"] forKey:@"app_release"];
-    [p setValue:@"Apple" forKey:@"$manufacturer"];
+    [p setValue:@"Apple" forKey:@"manufacturer"];
     [p setValue:[device systemName] forKey:@"os_name"];
-    [p setValue:[device systemVersion] forKey:@"$os_version"];
+    [p setValue:[device systemVersion] forKey:@"os_version"];
     [p setValue:deviceModel forKey:@"model"];
     [p setValue:deviceModel forKey:@"device_model"]; // legacy
+    
+    
     CGSize size = [UIScreen mainScreen].bounds.size;
-    [p setValue:@((NSInteger)size.height) forKey:@"$screen_height"];
-    [p setValue:@((NSInteger)size.width) forKey:@"$screen_width"];
+    [p setValue:@((NSInteger)size.height) forKey:@"screen_height"];
+    [p setValue:@((NSInteger)size.width) forKey:@"screen_width"];
+    [p setValue:[NSString stringWithFormat:@"%d*%d",(int)size.width, (int)size.height] forKey:@"resolution"];
+    
+    [p setValue:[[NSLocale preferredLanguages] objectAtIndex:0] forKey:@"language_code"];
+    
+    
     CTTelephonyNetworkInfo *networkInfo = [[CTTelephonyNetworkInfo alloc] init];
     CTCarrier *carrier = [networkInfo subscriberCellularProvider];
     if (carrier.carrierName.length) {
-        [p setValue:carrier.carrierName forKey:@"carrier"];
+        [p setValue:carrier.carrierName forKey:@"carrier_name"];
     }
+    
     [p setValue:[self IFA] forKey:@"device_id"];
+    
     return p;
 }
 
@@ -408,25 +428,43 @@ static Rake *sharedInstance = nil;
     
     properties = [properties copy];
     [Rake assertPropertyTypes:properties];
-    NSNumber *epochSeconds = @(round([[NSDate date] timeIntervalSince1970]));
+    
+    NSDate* now = [NSDate date];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyyMMddHHmmssSSS"];
+    [dateFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"Asia/Seoul"]];
+    
+    NSDateFormatter *localDateFormatter = [[NSDateFormatter alloc] init];
+    [localDateFormatter setDateFormat:@"yyyyMMddHHmmssSSS"];
+    
+    
     dispatch_async(self.serialQueue, ^{
         NSMutableDictionary *p = [NSMutableDictionary dictionary];
-        [p addEntriesFromDictionary:self.automaticProperties];
-        p[@"token"] = self.apiToken;
-        p[@"time"] = epochSeconds;
-        if (self.nameTag) {
-            p[@"rk_name_tag"] = self.nameTag;
-        }
-        if (self.distinctId) {
-            p[@"distinct_id"] = self.distinctId;
-        }
+        
+        
+        p[@"local_time"] = [dateFormatter stringFromDate:now];
+        p[@"base_time"] = [localDateFormatter stringFromDate:now];
+        
+        
+        // 1. super properties
         [p addEntriesFromDictionary:self.superProperties];
+        
+        // 2. custom properties
         if (properties) {
             [p addEntriesFromDictionary:properties];
         }
-        NSDictionary *e = @{@"properties": [NSDictionary dictionaryWithDictionary:p]};
+        
+        // 3. auto : device info
+        [p addEntriesFromDictionary:self.automaticProperties];
+        
+        // 4. add properties
+        NSDictionary *e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
+                            @"local_time": [dateFormatter stringFromDate:now],
+                            @"base_time": [localDateFormatter stringFromDate:now],
+                            @"token": self.apiToken};
         
         RakeLog(@"%@ queueing event: %@", self, e);
+        
         [self.eventsQueue addObject:e];
         if ([self.eventsQueue count] > 500) {
             [self.eventsQueue removeObjectAtIndex:0];
@@ -590,6 +628,7 @@ static Rake *sharedInstance = nil;
 
 - (void)flushEvents
 {
+    NSLog(@"~~~ Flush ~~~");
     [self flushQueue:_eventsQueue
             endpoint:@"/track/"];
 }
@@ -602,43 +641,51 @@ static Rake *sharedInstance = nil;
         NSArray *batch = [queue subarrayWithRange:NSMakeRange(0, batchSize)];
         
         NSString *requestData = [self encodeAPIData:batch];
-        NSString *postBody = [NSString stringWithFormat:@"ip=1&data=%@", requestData];
+        NSString *postBody = [NSString stringWithFormat:@"compress=plain&data=%@&ip=1", requestData];
         RakeDebug(@"%@ flushing %lu of %lu to %@: %@", self, (unsigned long)[batch count], (unsigned long)[queue count], endpoint, queue);
         NSURLRequest *request = [self apiRequestWithEndpoint:endpoint andBody:postBody];
         NSError *error = nil;
         
-        //        [self updateNetworkActivityIndicator:YES];
+        [self updateNetworkActivityIndicator:YES];
         
         NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:&error];
         
-        //        [self updateNetworkActivityIndicator:NO];
+        [self updateNetworkActivityIndicator:NO];
         
         if (error) {
             NSLog(@"%@ network failure: %@", self, error);
             break;
+        } else{
+            NSLog(@"network Ok");
         }
+        
+        
         
         NSString *response = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
         if ([response intValue] == 0) {
             NSLog(@"%@ %@ api rejected some items", self, endpoint);
         };
         
+        if ([response intValue] == 1) {
+            NSLog(@"%@ %@ api accepted items", self, endpoint);
+        };
+        
         [queue removeObjectsInArray:batch];
     }
 }
 
-//- (void)updateNetworkActivityIndicator:(BOOL)on
-//{
-//    if (_showNetworkActivityIndicator) {
-//        [UIApplication sharedApplication].networkActivityIndicatorVisible = on;
-//    }
-//}
+- (void)updateNetworkActivityIndicator:(BOOL)on
+{
+    if (_showNetworkActivityIndicator) {
+        [UIApplication sharedApplication].networkActivityIndicatorVisible = on;
+    }
+}
 
 - (void)reachabilityChanged:(SCNetworkReachabilityFlags)flags
 {
     dispatch_async(self.serialQueue, ^{
         BOOL wifi = (flags & kSCNetworkReachabilityFlagsReachable) && !(flags & kSCNetworkReachabilityFlagsIsWWAN);
-        self.automaticProperties[@"$wifi"] = wifi ? @YES : @NO;
+        self.automaticProperties[@"network_type"] = wifi ? @"WIFI" : @"NOT WIFI";
     });
 }
 
@@ -646,7 +693,7 @@ static Rake *sharedInstance = nil;
 {
     NSURL *URL = [NSURL URLWithString:[self.serverURL stringByAppendingString:endpoint]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:URL];
-    [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+    //    [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
     [request setHTTPMethod:@"POST"];
     [request setHTTPBody:[body dataUsingEncoding:NSUTF8StringEncoding]];
     RakeDebug(@"%@ http request: %@?%@", self, URL, body);
@@ -762,6 +809,9 @@ static Rake *sharedInstance = nil;
         self.superProperties = properties[@"superProperties"] ? properties[@"superProperties"] : [NSMutableDictionary dictionary];
     }
 }
+
+
+
 
 #pragma mark - UIApplication notifications
 

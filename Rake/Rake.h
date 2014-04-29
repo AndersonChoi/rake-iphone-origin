@@ -69,6 +69,7 @@
  */
 @property (atomic) BOOL flushOnBackground;
 
+@property (atomic) BOOL showNetworkActivityIndicator;
 
 /*!
  @property
@@ -109,6 +110,8 @@
  */
 + (Rake *)sharedInstanceWithToken:(NSString *)apiToken;
 
++ (Rake *)sharedInstanceWithToken:(NSString *)apiToken andUseDevServer:(BOOL)isDevServer;
+
 /*!
  @method
  
@@ -120,6 +123,7 @@
  calling this class method.
  */
 + (Rake *)sharedInstance;
+
 
 /*!
  @method
