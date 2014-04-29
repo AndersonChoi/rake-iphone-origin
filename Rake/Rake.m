@@ -247,24 +247,24 @@ static Rake *sharedInstance = nil;
     NSMutableDictionary *p = [NSMutableDictionary dictionary];
     UIDevice *device = [UIDevice currentDevice];
     NSString *deviceModel = [self deviceModel];
-    [p setValue:@"iphone" forKey:@"mp_lib"];
-    [p setValue:VERSION forKey:@"$lib_version"];
-    [p setValue:[[NSBundle mainBundle] infoDictionary][@"CFBundleVersion"] forKey:@"$app_version"];
-    [p setValue:[[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"] forKey:@"$app_release"];
+    [p setValue:@"iphone" forKey:@"rk_lib"];
+    [p setValue:VERSION forKey:@"lib_version"];
+    [p setValue:[[NSBundle mainBundle] infoDictionary][@"CFBundleVersion"] forKey:@"app_version"];
+    [p setValue:[[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"] forKey:@"app_release"];
     [p setValue:@"Apple" forKey:@"$manufacturer"];
-    [p setValue:[device systemName] forKey:@"$os"];
+    [p setValue:[device systemName] forKey:@"os_name"];
     [p setValue:[device systemVersion] forKey:@"$os_version"];
-    [p setValue:deviceModel forKey:@"$model"];
-    [p setValue:deviceModel forKey:@"mp_device_model"]; // legacy
+    [p setValue:deviceModel forKey:@"model"];
+    [p setValue:deviceModel forKey:@"device_model"]; // legacy
     CGSize size = [UIScreen mainScreen].bounds.size;
     [p setValue:@((NSInteger)size.height) forKey:@"$screen_height"];
     [p setValue:@((NSInteger)size.width) forKey:@"$screen_width"];
     CTTelephonyNetworkInfo *networkInfo = [[CTTelephonyNetworkInfo alloc] init];
     CTCarrier *carrier = [networkInfo subscriberCellularProvider];
     if (carrier.carrierName.length) {
-        [p setValue:carrier.carrierName forKey:@"$carrier"];
+        [p setValue:carrier.carrierName forKey:@"carrier"];
     }
-    [p setValue:[self IFA] forKey:@"$ios_ifa"];
+    [p setValue:[self IFA] forKey:@"device_id"];
     return p;
 }
 
