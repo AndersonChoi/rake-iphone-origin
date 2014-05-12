@@ -16,7 +16,7 @@
 #import "Rake.h"
 #import "NSData+RKBase64.h"
 
-#define VERSION @"r0.5.0_c1.7.0"
+#define VERSION @"r0.5.0_c1.7.1"
 
 #ifdef RAKE_LOG
 #define RakeLog(...) NSLog(__VA_ARGS__)
@@ -90,7 +90,7 @@ static Rake *sharedInstance = nil;
     dispatch_once(&onceToken, ^{
         sharedInstance = [[super alloc] initWithToken:apiToken andFlushInterval:60];
         if(isDevServer){
-            [sharedInstance setServerURL:@"http://dev.rake.skplanet.com:8000/log/"];
+            [sharedInstance setServerURL:@"https://pg.rake.skplanet.com:8443/log"];
         }else{
             [sharedInstance setServerURL:@"https://rake.skplanet.com:8443/log/"];
         }
