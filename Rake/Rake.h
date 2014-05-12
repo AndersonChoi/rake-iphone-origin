@@ -108,7 +108,7 @@
  
  @param apiToken        your project token
  */
-+ (Rake *)sharedInstanceWithToken:(NSString *)apiToken;
+//+ (Rake *)sharedInstanceWithToken:(NSString *)apiToken;
 
 + (Rake *)sharedInstanceWithToken:(NSString *)apiToken andUseDevServer:(BOOL)isDevServer;
 

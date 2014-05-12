@@ -75,14 +75,14 @@ static void RakeReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkR
 
 static Rake *sharedInstance = nil;
 
-+ (Rake *)sharedInstanceWithToken:(NSString *)apiToken
-{
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedInstance = [[super alloc] initWithToken:apiToken andFlushInterval:60];
-    });
-    return sharedInstance;
-}
+//+ (Rake *)sharedInstanceWithToken:(NSString *)apiToken
+//{
+//    static dispatch_once_t onceToken;
+//    dispatch_once(&onceToken, ^{
+//        sharedInstance = [[super alloc] initWithToken:apiToken andFlushInterval:60];
+//    });
+//    return sharedInstance;
+//}
 
 + (Rake *)sharedInstanceWithToken:(NSString *)apiToken andUseDevServer:(BOOL)isDevServer
 {
