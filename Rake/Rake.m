@@ -119,7 +119,7 @@ static Rake *sharedInstance = nil;
         _flushInterval = flushInterval;
         self.flushOnBackground = YES;
         //        self.showNetworkActivityIndicator = YES;
-        self.serverURL = @"http://dev.rake.skplanet.com:8000/log/";
+        self.serverURL = @"https://pg.rake.skplanet.com:8443/log";
         
         
         
