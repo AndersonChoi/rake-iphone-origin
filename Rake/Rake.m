@@ -90,7 +90,7 @@ static Rake *sharedInstance = nil;
     dispatch_once(&onceToken, ^{
         sharedInstance = [[super alloc] initWithToken:apiToken andFlushInterval:60];
         if(isDevServer){
-            [sharedInstance setServerURL:@"http://dev.rake.skplanet.com:8000/log/"];
+            [sharedInstance setServerURL:@"https://pg.rake.skplanet.com:8443/log"];
         }else{
             [sharedInstance setServerURL:@"https://rake.skplanet.com:8443/log/"];
         }
