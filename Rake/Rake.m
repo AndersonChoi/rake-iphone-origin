@@ -16,7 +16,7 @@
 #import "Rake.h"
 #import "NSData+RKBase64.h"
 
-#define VERSION @"r0.5.0_c1.7.1"
+#define VERSION @"r0.5.0_c1.7.2"
 
 #ifdef RAKE_LOG
 #define RakeLog(...) NSLog(__VA_ARGS__)
@@ -29,6 +29,8 @@
 #else
 #define RakeDebug(...)
 #endif
+
+#define USE_NO_IFA
 
 @interface Rake () <UIAlertViewDelegate> {
     NSUInteger _flushInterval;
@@ -221,10 +223,12 @@ static Rake *sharedInstance = nil;
     return results;
 }
 
+
 - (NSString *)IFA
 {
     NSString *ifa = @"UNKNOWN";
-    
+
+#ifndef USE_NO_IFA
     Class ASIdentifierManagerClass = NSClassFromString(@"ASIdentifierManager");
     if (ASIdentifierManagerClass) {
         SEL sharedManagerSelector = NSSelectorFromString(@"sharedManager");
@@ -233,6 +237,7 @@ static Rake *sharedInstance = nil;
         NSUUID *uuid = ((NSUUID* (*)(id, SEL))[sharedManager methodForSelector:advertisingIdentifierSelector])(sharedManager, advertisingIdentifierSelector);
         ifa = [uuid UUIDString];
     }
+#endif
     
     return ifa;
 }
