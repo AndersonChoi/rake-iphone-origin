@@ -63,6 +63,12 @@
 
 @implementation Rake
 
+// <-- SMART_WALLET
+NSString* ssSchemaId;
+NSDictionary* ssFieldOrder;
+NSArray* ssEncryptionFields;
+// SMART_WALLET -->
+
 static void RakeReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void *info)
 {
     if (info != NULL && [(__bridge NSObject*)info isKindOfClass:[Rake class]]) {
@@ -97,6 +103,39 @@ static Rake *sharedInstance = nil;
             [sharedInstance setServerURL:@"https://rake.skplanet.com:8443/log/"];
         }
     });
+    
+    
+    
+    // <-- SMART_WALLET -  INIT FIELDS
+    ssSchemaId = @"53798b54e4b05e4e0e50811b";
+    ssFieldOrder = @{@"base_time":@0,
+                     @"local_time":@1,
+                     @"session_id":@2,
+                     @"auth_key":@3,
+                     @"device_id":@4,
+                     @"device_model":@5,
+                     @"os_name":@6,
+                     @"os_version":@7,
+                     @"browser_name":@8,
+                     @"browser_version":@9,
+                     @"resolution":@10,
+                     @"language_code":@11,
+                     @"ip":@12,
+                     @"network_type":@13,
+                     @"carrier_name":@14,
+                     @"log_version":@15,
+                     @"ble_key":@16,
+                     @"app_version":@17,
+                     @"store_name":@18,
+                     @"source":@19,
+                     @"medium":@20,
+                     @"term":@21,
+                     @"campaign":@22,
+                     @"previous_page":@23,
+                     @"action_id":@24,
+                     @"current_page":@25};
+    ssEncryptionFields = @[];
+    // SMART_WALLET -->
     return sharedInstance;
 }
 
@@ -261,6 +300,7 @@ static Rake *sharedInstance = nil;
 //    return radio;
 //}
 #endif
+
 
 - (NSMutableDictionary *)collectAutomaticProperties
 {
@@ -465,6 +505,14 @@ static Rake *sharedInstance = nil;
         if (properties) {
             [p addEntriesFromDictionary:properties];
         }
+
+        
+        NSDictionary* sentinel_meta = @{@"_$ssSchemaId":ssSchemaId,
+                                        @"_$ssFieldOrder":ssFieldOrder,
+                                        @"_$encryptionFields":ssEncryptionFields};
+        
+        p[@"sentinel_meta"] = sentinel_meta;
+        
         
         // 3-1. sentinel(schema) meta data
         NSString* schemaId;
