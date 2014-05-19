@@ -506,12 +506,7 @@ static Rake *sharedInstance = nil;
 
         // 1. super properties
         [p addEntriesFromDictionary:self.superProperties];
-
-        // 2. custom properties
-        if (properties) {
-            [p addEntriesFromDictionary:properties];
-        }
-
+        
         
         NSDictionary* sentinel_meta = @{@"_$ssSchemaId":ssSchemaId,
                                         @"_$ssFieldOrder":ssFieldOrder,
@@ -526,13 +521,27 @@ static Rake *sharedInstance = nil;
         NSArray* encryptionFields;
         
         // if properties has schemaId
-        if(p[@"sentinel_meta"] != nil){
+        if(properties[@"sentinel_meta"] != nil){
             // move schemaId, fieldOrder, encryptionField out of p
-            schemaId = p[@"sentinel_meta"][@"_$ssSchemaId"];
-            fieldOrder = p[@"sentinel_meta"][@"_$ssFieldOrder"];
-            encryptionFields = p[@"sentinel_meta"][@"_$encryptionFields"];
-            [p removeObjectForKey:@"sentinel_meta"];
-            
+            schemaId = properties[@"sentinel_meta"][@"_$ssSchemaId"];
+            fieldOrder = properties[@"sentinel_meta"][@"_$ssFieldOrder"];
+            encryptionFields = properties[@"sentinel_meta"][@"_$encryptionFields"];
+        }
+        
+        // 2. custom properties
+        if (properties) {
+            NSString* key;
+            NSMutableDictionary* body = [[NSMutableDictionary alloc]init];
+            NSEnumerator* propertiesEnumerator = [properties keyEnumerator];
+            while ( (key = [propertiesEnumerator nextObject]) != nil ) {
+                
+                if(fieldOrder[key] != nil){
+                    [p setObject:properties[key] forKey:key];
+                }else{
+                    [body setObject:properties[key] forKey:key];
+                }
+            }
+            [p setObject:body forKey:@"_$body"];
         }
         
         // 3-2. auto : device info
@@ -549,7 +558,7 @@ static Rake *sharedInstance = nil;
             }
             
             if(addToProperties){
-                [p setValue:[self.automaticProperties valueForKey:key] forKey:key];
+                [p setObject:self.automaticProperties[key] forKey:key];
             }
         }
         
