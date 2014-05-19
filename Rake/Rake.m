@@ -107,33 +107,39 @@ static Rake *sharedInstance = nil;
     
     
     // <-- SMART_WALLET -  INIT FIELDS
-    ssSchemaId = @"53798b54e4b05e4e0e50811b";
-    ssFieldOrder = @{@"base_time":@0,
+    ssSchemaId = @"5379e4a8e4b05e4e0e50811d";
+    ssFieldOrder = @{
+                     @"base_time":@0,
                      @"local_time":@1,
-                     @"session_id":@2,
-                     @"auth_key":@3,
-                     @"device_id":@4,
-                     @"device_model":@5,
-                     @"os_name":@6,
-                     @"os_version":@7,
-                     @"browser_name":@8,
-                     @"browser_version":@9,
-                     @"resolution":@10,
-                     @"language_code":@11,
-                     @"ip":@12,
-                     @"network_type":@13,
-                     @"carrier_name":@14,
-                     @"log_version":@15,
-                     @"ble_key":@16,
-                     @"app_version":@17,
-                     @"store_name":@18,
-                     @"source":@19,
-                     @"medium":@20,
-                     @"term":@21,
-                     @"campaign":@22,
-                     @"previous_page":@23,
-                     @"action_id":@24,
-                     @"current_page":@25};
+                     @"recv_time":@2,
+                     @"rake_lib":@3,
+                     @"rake_lib_version":@4,
+                     @"token":@5,
+                     @"session_id":@6,
+                     @"auth_key":@7,
+                     @"device_id":@8,
+                     @"device_model":@9,
+                     @"os_name":@10,
+                     @"os_version":@11,
+                     @"browser_name":@12,
+                     @"browser_version":@13,
+                     @"resolution":@14,
+                     @"language_code":@15,
+                     @"ip":@16,
+                     @"network_type":@17,
+                     @"carrier_name":@18,
+                     @"log_version":@19,
+                     @"ble_key":@20,
+                     @"app_version":@21,
+                     @"store_name":@22,
+                     @"source":@23,
+                     @"medium":@24,
+                     @"term":@25,
+                     @"campaign":@26,
+                     @"previous_page":@27,
+                     @"action_id":@28,
+                     @"current_page":@29
+                     };
     ssEncryptionFields = @[];
     // SMART_WALLET -->
     return sharedInstance;
