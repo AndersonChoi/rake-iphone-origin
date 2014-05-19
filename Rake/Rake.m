@@ -16,7 +16,7 @@
 #import "Rake.h"
 #import "NSData+RKBase64.h"
 
-#define VERSION @"r0.5.0_c1.7.1"
+#define VERSION @"r0.5.0_c1.7.2"
 
 #ifdef RAKE_LOG
 #define RakeLog(...) NSLog(__VA_ARGS__)
@@ -29,6 +29,8 @@
 #else
 #define RakeDebug(...)
 #endif
+
+#define USE_NO_IFA
 
 @interface Rake () <UIAlertViewDelegate> {
     NSUInteger _flushInterval;
@@ -91,7 +93,7 @@ static Rake *sharedInstance = nil;
         sharedInstance = [[super alloc] initWithToken:apiToken andFlushInterval:60];
         if(isDevServer){
             [sharedInstance setServerURL:@"https://pg.rake.skplanet.com:8443/log"];
-        } else {
+        }else{
             [sharedInstance setServerURL:@"https://rake.skplanet.com:8443/log/"];
         }
     });
@@ -221,10 +223,12 @@ static Rake *sharedInstance = nil;
     return results;
 }
 
+
 - (NSString *)IFA
 {
     NSString *ifa = @"UNKNOWN";
-
+    
+#ifndef USE_NO_IFA
     Class ASIdentifierManagerClass = NSClassFromString(@"ASIdentifierManager");
     if (ASIdentifierManagerClass) {
         SEL sharedManagerSelector = NSSelectorFromString(@"sharedManager");
@@ -233,7 +237,8 @@ static Rake *sharedInstance = nil;
         NSUUID *uuid = ((NSUUID* (*)(id, SEL))[sharedManager methodForSelector:advertisingIdentifierSelector])(sharedManager, advertisingIdentifierSelector);
         ifa = [uuid UUIDString];
     }
-
+#endif
+    
     return ifa;
 }
 
@@ -269,7 +274,6 @@ static Rake *sharedInstance = nil;
     [p setValue:@"Apple" forKey:@"manufacturer"];
     [p setValue:[device systemName] forKey:@"os_name"];
     [p setValue:[device systemVersion] forKey:@"os_version"];
-    [p setValue:deviceModel forKey:@"model"];
     [p setValue:deviceModel forKey:@"device_model"]; // legacy
 
 
@@ -446,8 +450,10 @@ static Rake *sharedInstance = nil;
 
     dispatch_async(self.serialQueue, ^{
         NSMutableDictionary *p = [NSMutableDictionary dictionary];
-
-
+        
+        // rake token
+        p[@"token"] = self.apiToken;
+        
         p[@"local_time"] = [_localDateFormatter stringFromDate:now];
         p[@"base_time"] = [_baseDateFormatter stringFromDate:now];
 
@@ -459,16 +465,55 @@ static Rake *sharedInstance = nil;
         if (properties) {
             [p addEntriesFromDictionary:properties];
         }
-
-        // 3. auto : device info
-        [p addEntriesFromDictionary:self.automaticProperties];
-
+        
+        // 3-1. sentinel(schema) meta data
+        NSString* schemaId;
+        NSDictionary* fieldOrder;
+        NSArray* encryptionFields;
+        
+        // if properties has schemaId
+        if(p[@"sentinel_meta"] != nil){
+            // move schemaId, fieldOrder, encryptionField out of p
+            schemaId = p[@"sentinel_meta"][@"_$ssSchemaId"];
+            fieldOrder = p[@"sentinel_meta"][@"_$ssFieldOrder"];
+            encryptionFields = p[@"sentinel_meta"][@"_$encryptionFields"];
+            [p removeObjectForKey:@"sentinel_meta"];
+            
+        }
+        
+        // 3-2. auto : device info
+        // get only values in fieldOrder
+        NSString* key;
+        NSEnumerator* enumerator = [self.automaticProperties keyEnumerator];
+        while ( (key = [enumerator nextObject]) != nil ) {
+            BOOL addToProperties = YES;
+            
+            if(schemaId){
+                if(fieldOrder[key] == nil){
+                    addToProperties = NO;
+                }
+            }
+            
+            if(addToProperties){
+                [p setValue:[self.automaticProperties valueForKey:key] forKey:key];
+            }
+        }
+        
+        
+        
         // 4. add properties
-        NSDictionary *e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
-                            @"local_time": [_localDateFormatter stringFromDate:now],
-                            @"base_time": [_baseDateFormatter stringFromDate:now],
-                            @"token": self.apiToken};
-
+        NSDictionary *e;
+        if(schemaId){
+            e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
+                  @"_$schemaId": schemaId,
+                  @"_$fieldOrder": fieldOrder,
+                  @"_$encrypionFields": encryptionFields
+                  };
+        }else{
+            e = @{@"properties": [NSDictionary dictionaryWithDictionary:p]};
+        }
+        
+        
         RakeLog(@"%@ queueing event: %@", self, e);
 
         [self.eventsQueue addObject:e];
@@ -640,8 +685,10 @@ static Rake *sharedInstance = nil;
 
 - (void)flushQueue:(NSMutableArray *)queue endpoint:(NSString *)endpoint
 {
+    
     while ([queue count] > 0) {
         NSUInteger batchSize = ([queue count] > 50) ? 50 : [queue count];
+        
         NSArray *batch = [queue subarrayWithRange:NSMakeRange(0, batchSize)];
 
         NSString *requestData = [self encodeAPIData:batch];
@@ -662,9 +709,7 @@ static Rake *sharedInstance = nil;
         } else {
             NSLog(@"network Ok");
         }
-
-
-
+        
         NSString *response = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
         if ([response intValue] == 0) {
             NSLog(@"%@ %@ api rejected some items", self, endpoint);
@@ -673,7 +718,6 @@ static Rake *sharedInstance = nil;
         if ([response intValue] == 1) {
             NSLog(@"%@ %@ api accepted items", self, endpoint);
         };
-
         [queue removeObjectsInArray:batch];
     }
 }
