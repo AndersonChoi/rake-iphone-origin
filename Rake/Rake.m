@@ -451,7 +451,7 @@ static Rake *sharedInstance = nil;
     dispatch_async(self.serialQueue, ^{
         NSMutableDictionary *p = [NSMutableDictionary dictionary];
         
-
+        
         
         
         // 1. super properties
@@ -477,11 +477,11 @@ static Rake *sharedInstance = nil;
             NSMutableDictionary* body = [[NSMutableDictionary alloc]init];
             NSEnumerator* propertiesEnumerator = [properties keyEnumerator];
             while ( (key = [propertiesEnumerator nextObject]) != nil ) {
-                
+                if([key isEqualToString:@"sentinel_meta"]){
+                    continue;
+                }
                 if(fieldOrder[key] != nil){
-                    if ([[properties valueForKey:key] isKindOfClass:[NSString class]] && [properties[key] length]==0) {
-                        // do not overwrite with empty string
-                    }else{
+                    if([properties valueForKey:key] && [[properties valueForKey:key] length] > 0){
                         [p setObject:properties[key] forKey:key];
                     }
                 }else{
