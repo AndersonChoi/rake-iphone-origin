@@ -451,11 +451,7 @@ static Rake *sharedInstance = nil;
     dispatch_async(self.serialQueue, ^{
         NSMutableDictionary *p = [NSMutableDictionary dictionary];
         
-        // rake token
-        p[@"token"] = self.apiToken;
-        
-        p[@"local_time"] = [_localDateFormatter stringFromDate:now];
-        p[@"base_time"] = [_baseDateFormatter stringFromDate:now];
+
         
         
         // 1. super properties
@@ -483,7 +479,11 @@ static Rake *sharedInstance = nil;
             while ( (key = [propertiesEnumerator nextObject]) != nil ) {
                 
                 if(fieldOrder[key] != nil){
-                    [p setObject:properties[key] forKey:key];
+                    if ([[properties valueForKey:key] isKindOfClass:[NSString class]] && [properties[key] length]==0) {
+                        // do not overwrite with empty string
+                    }else{
+                        [p setObject:properties[key] forKey:key];
+                    }
                 }else{
                     [body setObject:properties[key] forKey:key];
                 }
@@ -509,7 +509,11 @@ static Rake *sharedInstance = nil;
             }
         }
         
+        // rake token
+        p[@"token"] = self.apiToken;
         
+        p[@"local_time"] = [_localDateFormatter stringFromDate:now];
+        p[@"base_time"] = [_baseDateFormatter stringFromDate:now];
         
         // 4. add properties
         NSDictionary *e;
