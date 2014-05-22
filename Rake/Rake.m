@@ -51,6 +51,7 @@
 @property (nonatomic, strong) CTTelephonyNetworkInfo *telephonyInfo;
 @property (nonatomic, strong) NSDateFormatter *localDateFormatter;
 @property (nonatomic, strong) NSDateFormatter *baseDateFormatter;
+@property (nonatomic) BOOL isDevServer;
 
 @end
 
@@ -91,6 +92,7 @@ static Rake *sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         sharedInstance = [[super alloc] initWithToken:apiToken andFlushInterval:60];
+        sharedInstance.isDevServer = isDevServer;
         if(isDevServer){
             [sharedInstance setServerURL:@"https://pg.rake.skplanet.com:8443/log"];
         }else{
@@ -537,6 +539,11 @@ static Rake *sharedInstance = nil;
         if ([Rake inBackground]) {
             [self archiveEvents];
         }
+        
+        if(_isDevServer){
+            [self flush];
+        }
+
     });
 }
 
