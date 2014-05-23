@@ -16,7 +16,7 @@
 #import "Rake.h"
 #import "NSData+RKBase64.h"
 
-#define VERSION @"r0.5.0_c1.7.3"
+#define VERSION @"r0.5.0_c1.7.4"
 
 #ifdef RAKE_LOG
 #define RakeLog(...) NSLog(__VA_ARGS__)
@@ -244,6 +244,14 @@ static Rake *sharedInstance = nil;
     return ifa;
 }
 
+
+- (NSString*) IDFV
+{
+    NSString *idfv = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+    
+    return idfv;
+}
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000
 //- (void)setCurrentRadio
 //{
@@ -299,7 +307,7 @@ static Rake *sharedInstance = nil;
     [p setValue:[Rake wifiAvailable]?@"WIFI" : @"NOT WIFI" forKey:@"network_type"];
     
     
-    [p setValue:[self IFA] forKey:@"device_id"];
+    [p setValue:[self IDFV] forKey:@"device_id"];
     
     return p;
 }
