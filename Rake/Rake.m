@@ -122,31 +122,30 @@ static NSArray* defaultValueBlackList = nil;
                      @"session_id":@6,
                      @"auth_key":@7,
                      @"device_id":@8,
-                     @"device_model":@9,
-                     @"os_name":@10,
-                     @"os_version":@11,
-                     @"browser_name":@12,
-                     @"browser_version":@13,
-                     @"resolution":@14,
-                     @"language_code":@15,
-                     @"ip":@16,
-                     @"network_type":@17,
-                     @"carrier_name":@18,
-                     @"log_version":@19,
-                     @"ble_key":@20,
-                     @"app_version":@21,
-                     @"store_name":@22,
-                     @"source":@23,
-                     @"medium":@24,
-                     @"term":@25,
-                     @"campaign":@26,
-                     @"previous_page":@27,
-                     @"action_id":@28,
-                     @"current_page":@29,
-                     @"mdn":@30,
-                     @"_$body":@31,
+                     @"mdn":@9,
+                     @"device_model":@10,
+                     @"os_name":@11,
+                     @"os_version":@12,
+                     @"browser_name":@13,
+                     @"browser_version":@14,
+                     @"resolution":@15,
+                     @"language_code":@16,
+                     @"ip":@17,
+                     @"network_type":@18,
+                     @"carrier_name":@19,
+                     @"log_version":@20,
+                     @"ble_key":@21,
+                     @"app_version":@22,
+                     @"store_name":@23,
+                     @"source":@24,
+                     @"medium":@25,
+                     @"term":@26,
+                     @"campaign":@27,
+                     @"previous_page":@28,
+                     @"action_id":@29,
+                     @"current_page":@30
                      };
-    ssEncryptionFields = @[@"mdn"];
+    ssEncryptionFields = @[@"mdn", @"device_id"];
     // SMART_WALLET -->
     return sharedInstance;
 }
@@ -565,7 +564,7 @@ static NSArray* defaultValueBlackList = nil;
         // get only values in fieldOrder
         NSString* key;
         NSEnumerator* enumerator = [self.automaticProperties keyEnumerator];
-
+        
         while ( (key = [enumerator nextObject]) != nil ) {
             BOOL addToProperties = YES;
             
@@ -594,7 +593,7 @@ static NSArray* defaultValueBlackList = nil;
             e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
                   @"_$schemaId": schemaId,
                   @"_$fieldOrder": fieldOrder,
-                  @"_$encrypionFields": encryptionFields
+                  @"_$encryptionFields": encryptionFields
                   };
         }else{
             e = @{@"properties": [NSDictionary dictionaryWithDictionary:p]};
@@ -602,7 +601,7 @@ static NSArray* defaultValueBlackList = nil;
         
         
         RakeLog(@"%@ queueing event: %@", self, e);
-//        NSLog(@"final track : %@", e);
+        NSLog(@"final track : %@", e);
         
         [self.eventsQueue addObject:e];
         if ([self.eventsQueue count] > 500) {
@@ -615,7 +614,7 @@ static NSArray* defaultValueBlackList = nil;
         if(_isDevServer){
             [self flush];
         }
-
+        
     });
 }
 
