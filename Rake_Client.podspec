@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "Rake_Client"
-  s.version      = "1.7.1"
+  s.version      = "1.7.3"
   s.summary      = "iPhone tracking library for Rake"
   s.homepage     = "https://github.com/dingulx2/rake-iphone"
   s.license      = 'Apache License, Version 2.0'

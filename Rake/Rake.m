@@ -16,7 +16,7 @@
 #import "Rake.h"
 #import "NSData+RKBase64.h"
 
-#define VERSION @"r0.5.0_c1.7.2"
+#define VERSION @"r0.5.0_c1.7.4"
 
 #ifdef RAKE_LOG
 #define RakeLog(...) NSLog(__VA_ARGS__)
@@ -83,6 +83,7 @@ static void RakeReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkR
 }
 
 static Rake *sharedInstance = nil;
+static NSArray* defaultValueBlackList = nil;
 
 //+ (Rake *)sharedInstanceWithToken:(NSString *)apiToken
 //{
@@ -104,6 +105,7 @@ static Rake *sharedInstance = nil;
         }else{
             [sharedInstance setServerURL:@"https://rake.skplanet.com:8443/log/"];
         }
+        defaultValueBlackList = @[@"mdn"];
     });
     
     
@@ -290,6 +292,14 @@ static Rake *sharedInstance = nil;
     return ifa;
 }
 
+
+- (NSString*) IDFV
+{
+    NSString *idfv = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+    
+    return idfv;
+}
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000
 //- (void)setCurrentRadio
 //{
@@ -346,7 +356,8 @@ static Rake *sharedInstance = nil;
     [p setValue:[Rake wifiAvailable]?@"WIFI" : @"NOT WIFI" forKey:@"network_type"];
     
     
-    [p setValue:[self IFA] forKey:@"device_id"];
+    [p setValue:[self IDFV] forKey:@"device_id"];
+    [p setValue:@"" forKey:@"mdn"];
     
     return p;
 }
@@ -500,11 +511,7 @@ static Rake *sharedInstance = nil;
     dispatch_async(self.serialQueue, ^{
         NSMutableDictionary *p = [NSMutableDictionary dictionary];
         
-        // rake token
-        p[@"token"] = self.apiToken;
         
-        p[@"local_time"] = [_localDateFormatter stringFromDate:now];
-        p[@"base_time"] = [_baseDateFormatter stringFromDate:now];
         
         
         // 1. super properties
@@ -539,9 +546,13 @@ static Rake *sharedInstance = nil;
             NSMutableDictionary* body = [[NSMutableDictionary alloc]init];
             NSEnumerator* propertiesEnumerator = [properties keyEnumerator];
             while ( (key = [propertiesEnumerator nextObject]) != nil ) {
-                
+                if([key isEqualToString:@"sentinel_meta"]){
+                    continue;
+                }
                 if(fieldOrder[key] != nil){
-                    [p setObject:properties[key] forKey:key];
+                    if([properties valueForKey:key] && [[properties valueForKey:key] length] > 0){
+                        [p setObject:properties[key] forKey:key];
+                    }
                 }else{
                     [body setObject:properties[key] forKey:key];
                 }
@@ -553,6 +564,7 @@ static Rake *sharedInstance = nil;
         // get only values in fieldOrder
         NSString* key;
         NSEnumerator* enumerator = [self.automaticProperties keyEnumerator];
+
         while ( (key = [enumerator nextObject]) != nil ) {
             BOOL addToProperties = YES;
             
@@ -560,6 +572,8 @@ static Rake *sharedInstance = nil;
                 if(fieldOrder[key] == nil){
                     addToProperties = NO;
                 }
+            }else if([defaultValueBlackList valueForKey:key] != nil){
+                addToProperties = NO;
             }
             
             if(addToProperties){
@@ -567,7 +581,11 @@ static Rake *sharedInstance = nil;
             }
         }
         
+        // rake token
+        p[@"token"] = self.apiToken;
         
+        p[@"local_time"] = [_localDateFormatter stringFromDate:now];
+        p[@"base_time"] = [_baseDateFormatter stringFromDate:now];
         
         // 4. add properties
         NSDictionary *e;
@@ -596,6 +614,7 @@ static Rake *sharedInstance = nil;
         if(_isDevServer){
             [self flush];
         }
+
     });
 }
 
