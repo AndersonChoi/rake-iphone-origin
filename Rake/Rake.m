@@ -143,9 +143,10 @@ static NSArray* defaultValueBlackList = nil;
                      @"previous_page":@27,
                      @"action_id":@28,
                      @"current_page":@29,
-                     @"_$body":@30,
+                     @"mdn":@30,
+                     @"_$body":@31,
                      };
-    ssEncryptionFields = @[];
+    ssEncryptionFields = @[@"mdn"];
     // SMART_WALLET -->
     return sharedInstance;
 }
@@ -601,7 +602,7 @@ static NSArray* defaultValueBlackList = nil;
         
         
         RakeLog(@"%@ queueing event: %@", self, e);
-        NSLog(@"final track : %@", e);
+//        NSLog(@"final track : %@", e);
         
         [self.eventsQueue addObject:e];
         if ([self.eventsQueue count] > 500) {
