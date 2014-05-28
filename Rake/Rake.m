@@ -516,7 +516,7 @@ static NSArray* defaultValueBlackList = nil;
                 if(fieldOrder[key] == nil){
                     addToProperties = NO;
                 }
-            }else if([defaultValueBlackList valueForKey:key] != nil){
+            }else if([defaultValueBlackList containsObject:key]){
                 addToProperties = NO;
             }
             
