@@ -77,6 +77,7 @@ static void RakeReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkR
 }
 
 static Rake *sharedInstance = nil;
+static NSArray* defaultValueBlackList = nil;
 
 //+ (Rake *)sharedInstanceWithToken:(NSString *)apiToken
 //{
@@ -98,6 +99,7 @@ static Rake *sharedInstance = nil;
         }else{
             [sharedInstance setServerURL:@"https://rake.skplanet.com:8443/log/"];
         }
+        defaultValueBlackList = @[@"mdn"];
     });
     return sharedInstance;
 }
@@ -308,6 +310,7 @@ static Rake *sharedInstance = nil;
     
     
     [p setValue:[self IDFV] forKey:@"device_id"];
+    [p setValue:@"" forKey:@"mdn"];
     
     return p;
 }
@@ -505,6 +508,7 @@ static Rake *sharedInstance = nil;
         // get only values in fieldOrder
         NSString* key;
         NSEnumerator* enumerator = [self.automaticProperties keyEnumerator];
+
         while ( (key = [enumerator nextObject]) != nil ) {
             BOOL addToProperties = YES;
             
@@ -512,6 +516,8 @@ static Rake *sharedInstance = nil;
                 if(fieldOrder[key] == nil){
                     addToProperties = NO;
                 }
+            }else if([defaultValueBlackList valueForKey:key] != nil){
+                addToProperties = NO;
             }
             
             if(addToProperties){
