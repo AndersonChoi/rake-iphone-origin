@@ -601,7 +601,6 @@ static NSArray* defaultValueBlackList = nil;
         
         
         RakeLog(@"%@ queueing event: %@", self, e);
-        NSLog(@"final track : %@", e);
         
         [self.eventsQueue addObject:e];
         if ([self.eventsQueue count] > 500) {
