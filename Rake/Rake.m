@@ -537,7 +537,7 @@ static NSArray* defaultValueBlackList = nil;
             e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
                   @"_$schemaId": schemaId,
                   @"_$fieldOrder": fieldOrder,
-                  @"_$encrypionFields": encryptionFields
+                  @"_$encryptionFields": encryptionFields
                   };
         }else{
             e = @{@"properties": [NSDictionary dictionaryWithDictionary:p]};
