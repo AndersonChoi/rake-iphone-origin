@@ -16,7 +16,7 @@
 #import "Rake.h"
 #import "NSData+RKBase64.h"
 
-#define VERSION @"r0.5.0_c1.7.4"
+#define VERSION @"r0.5.0_c1.7.5"
 
 #ifdef RAKE_LOG
 #define RakeLog(...) NSLog(__VA_ARGS__)
@@ -99,7 +99,7 @@ static NSArray* defaultValueBlackList = nil;
         }else{
             [sharedInstance setServerURL:@"https://rake.skplanet.com:8443/log/"];
         }
-        defaultValueBlackList = @[@"mdn"];
+        defaultValueBlackList = @[];
     });
     return sharedInstance;
 }
@@ -310,7 +310,6 @@ static NSArray* defaultValueBlackList = nil;
     
     
     [p setValue:[self IDFV] forKey:@"device_id"];
-    [p setValue:@"" forKey:@"mdn"];
     
     return p;
 }
@@ -479,36 +478,37 @@ static NSArray* defaultValueBlackList = nil;
         // if properties has schemaId
         if(properties[@"sentinel_meta"] != nil){
             // move schemaId, fieldOrder, encryptionField out of p
-            schemaId = properties[@"sentinel_meta"][@"_$ssSchemaId"];
-            fieldOrder = properties[@"sentinel_meta"][@"_$ssFieldOrder"];
+            schemaId = properties[@"sentinel_meta"][@"_$schemaId"];
+            fieldOrder = properties[@"sentinel_meta"][@"_$fieldOrder"];
             encryptionFields = properties[@"sentinel_meta"][@"_$encryptionFields"];
         }
         
         // 2. custom properties
         if (properties) {
             NSString* key;
-            NSMutableDictionary* body = [[NSMutableDictionary alloc]init];
             NSEnumerator* propertiesEnumerator = [properties keyEnumerator];
             while ( (key = [propertiesEnumerator nextObject]) != nil ) {
                 if([key isEqualToString:@"sentinel_meta"]){
                     continue;
                 }
-                if(fieldOrder[key] != nil){
-                    if([properties valueForKey:key] && [[properties valueForKey:key] length] > 0){
+                
+                if(fieldOrder != nil){
+                    // shuttle
+                    if(fieldOrder[key] != nil && [properties valueForKey:key] !=nil){
                         [p setObject:properties[key] forKey:key];
                     }
                 }else{
-                    [body setObject:properties[key] forKey:key];
+                    // no shuttle
+                    [p setObject:properties[key] forKey:key];
                 }
             }
-            [p setObject:body forKey:@"_$body"];
         }
         
         // 3-2. auto : device info
         // get only values in fieldOrder
         NSString* key;
         NSEnumerator* enumerator = [self.automaticProperties keyEnumerator];
-
+        
         while ( (key = [enumerator nextObject]) != nil ) {
             BOOL addToProperties = YES;
             
@@ -557,7 +557,7 @@ static NSArray* defaultValueBlackList = nil;
         if(_isDevServer){
             [self flush];
         }
-
+        
     });
 }
 
