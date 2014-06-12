@@ -727,7 +727,7 @@ static NSArray* defaultValueBlackList = nil;
         NSArray *batch = [queue subarrayWithRange:NSMakeRange(0, batchSize)];
         
         NSString *requestData = [self encodeAPIData:batch];
-        NSString *postBody = [NSString stringWithFormat:@"compress=plain&data=%@&ip=1", requestData];
+        NSString *postBody = [NSString stringWithFormat:@"compress=plain&data=%@", requestData];
         RakeDebug(@"%@ flushing %lu of %lu to %@: %@", self, (unsigned long)[batch count], (unsigned long)[queue count], endpoint, queue);
         NSURLRequest *request = [self apiRequestWithEndpoint:endpoint andBody:postBody];
         NSError *error = nil;
@@ -827,10 +827,10 @@ static NSArray* defaultValueBlackList = nil;
     return [self filePathForData:@"events"];
 }
 
-- (NSString *)peopleFilePath
-{
-    return [self filePathForData:@"people"];
-}
+//- (NSString *)peopleFilePath
+//{
+//    return [self filePathForData:@"people"];
+//}
 
 - (NSString *)propertiesFilePath
 {
