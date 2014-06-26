@@ -143,7 +143,8 @@ static NSArray* defaultValueBlackList = nil;
                      @"campaign":@27,
                      @"previous_page":@28,
                      @"action_id":@29,
-                     @"current_page":@30
+                     @"current_page":@30,
+                     @"_$body":@31,
                      };
     ssEncryptionFields = @[@"mdn", @"device_id"];
     // SMART_WALLET -->
