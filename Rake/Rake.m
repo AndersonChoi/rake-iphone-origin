@@ -16,7 +16,7 @@
 #import "Rake.h"
 #import "NSData+RKBase64.h"
 
-#define VERSION @"r0.5.0_c1.7.5"
+#define VERSION @"r0.5.0_c1.7.6"
 
 #ifdef RAKE_LOG
 #define RakeLog(...) NSLog(__VA_ARGS__)
@@ -471,16 +471,27 @@ static NSArray* defaultValueBlackList = nil;
         
         
         // 3-1. sentinel(schema) meta data
-        NSString* schemaId;
-        NSDictionary* fieldOrder;
-        NSArray* encryptionFields;
+//        NSString* schemaId;
+//        NSDictionary* fieldOrder;
+//        NSArray* encryptionFields;
+        NSDictionary* sentinelMeta;
+        BOOL isPropertiesFromSentinel = NO;
+        
         
         // if properties has schemaId
         if(properties[@"sentinel_meta"] != nil){
             // move schemaId, fieldOrder, encryptionField out of p
-            schemaId = properties[@"sentinel_meta"][@"_$schemaId"];
-            fieldOrder = properties[@"sentinel_meta"][@"_$fieldOrder"];
-            encryptionFields = properties[@"sentinel_meta"][@"_$encryptionFields"];
+//            schemaId = properties[@"sentinel_meta"][@"_$schemaId"];
+//            fieldOrder = properties[@"sentinel_meta"][@"_$fieldOrder"];
+//            encryptionFields = properties[@"sentinel_meta"][@"_$encryptionFields"];
+            // iterate
+            sentinelMeta = properties[@"sentinel_meta"];
+            isPropertiesFromSentinel = YES;
+        }
+        
+        NSDictionary *fieldOrder = nil;
+        if(properties[@"_$fieldOrder"]!=nil){
+            fieldOrder = properties[@"_$fieldOrder"];
         }
         
         // 2. custom properties
@@ -495,6 +506,7 @@ static NSArray* defaultValueBlackList = nil;
                 if(fieldOrder != nil){
                     // shuttle
                     if(fieldOrder[key] != nil && [properties valueForKey:key] !=nil){
+                        // do not overwrite super properties with empty string
                         [p setObject:properties[key] forKey:key];
                     }
                 }else{
@@ -512,8 +524,10 @@ static NSArray* defaultValueBlackList = nil;
         while ( (key = [enumerator nextObject]) != nil ) {
             BOOL addToProperties = YES;
             
-            if(schemaId){
-                if(fieldOrder[key] == nil){
+            if(fieldOrder != nil){
+                if(fieldOrder[key] != nil){
+                    addToProperties = YES;
+                }else{
                     addToProperties = NO;
                 }
             }else if([defaultValueBlackList containsObject:key]){
@@ -532,17 +546,19 @@ static NSArray* defaultValueBlackList = nil;
         p[@"base_time"] = [_baseDateFormatter stringFromDate:now];
         
         // 4. add properties
-        NSDictionary *e;
-        if(schemaId){
-            e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
-                  @"_$schemaId": schemaId,
-                  @"_$fieldOrder": fieldOrder,
-                  @"_$encryptionFields": encryptionFields
-                  };
+        NSMutableDictionary *e = [NSMutableDictionary init];
+        if(isPropertiesFromSentinel){
+//            e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
+//                  @"_$schemaId": schemaId,
+//                  @"_$fieldOrder": fieldOrder,
+//                  @"_$encryptionFields": encryptionFields
+//        };
+            [e addEntriesFromDictionary:sentinelMeta];
+            [e setObject:p forKey:@"properties"];
         }else{
-            e = @{@"properties": [NSDictionary dictionaryWithDictionary:p]};
+//            e = @{@"properties": [NSDictionary dictionaryWithDictionary:p]};
+            [e setObject:p forKey:@"properties"];
         }
-        
         
         RakeLog(@"%@ queueing event: %@", self, e);
         
@@ -806,7 +822,11 @@ static NSArray* defaultValueBlackList = nil;
 {
     NSURL *URL = [NSURL URLWithString:[self.serverURL stringByAppendingString:endpoint]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:URL];
-    //    [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+    [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
+//    [request setValue:@"gzip" forHTTPHeaderField:@"Content-Encoding"];
+    
+
+    
     [request setHTTPMethod:@"POST"];
     [request setHTTPBody:[body dataUsingEncoding:NSUTF8StringEncoding]];
     RakeDebug(@"%@ http request: %@?%@", self, URL, body);
