@@ -485,13 +485,13 @@ static NSArray* defaultValueBlackList = nil;
 //            fieldOrder = properties[@"sentinel_meta"][@"_$fieldOrder"];
 //            encryptionFields = properties[@"sentinel_meta"][@"_$encryptionFields"];
             // iterate
-            sentinelMeta = properties[@"sentinel_meta"];
+            sentinelMeta = [properties objectForKey:@"sentinel_meta"];
             isPropertiesFromSentinel = YES;
         }
         
         NSDictionary *fieldOrder = nil;
         if(properties[@"_$fieldOrder"]!=nil){
-            fieldOrder = properties[@"_$fieldOrder"];
+            fieldOrder = [properties objectForKey:@"_$fieldOrder"];
         }
         
         // 2. custom properties
@@ -546,7 +546,7 @@ static NSArray* defaultValueBlackList = nil;
         p[@"base_time"] = [_baseDateFormatter stringFromDate:now];
         
         // 4. add properties
-        NSMutableDictionary *e = [NSMutableDictionary init];
+        NSMutableDictionary *e = [[NSMutableDictionary alloc]init];
         if(isPropertiesFromSentinel){
 //            e = @{@"properties": [NSDictionary dictionaryWithDictionary:p],
 //                  @"_$schemaId": schemaId,
